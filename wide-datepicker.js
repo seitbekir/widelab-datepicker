@@ -23,7 +23,16 @@ var datePicker = function(input)
 		if(typeof(datePicker.curent) == "object") datePicker.end();
 		
 		datePicker.input = input;
-		datePicker.Td = new Date();
+		if(/^[0-9]{2}\/[0-9]{2}\/[0-9]{4}$/g.test(input.value))
+		{
+			datePicker.Td = new Date(input.value.substr(6,4).toInt(), input.value.substr(3,2).toInt() - 1, input.value.substr(0,2).toInt());
+			datePicker.iTd = new Date(input.value.substr(6,4).toInt(), input.value.substr(3,2).toInt() - 1, input.value.substr(0,2).toInt());
+		}
+		else 
+		{
+			datePicker.Td = new Date();
+			datePicker.iTd = new Date();
+		}
 		datePicker.put();
 	}
 datePicker.buildCal = function(m, y)
@@ -34,13 +43,13 @@ datePicker.buildCal = function(m, y)
 		var oD = new Date(y, m, 1); //DD replaced line to fix date bug when current day is 31st
 		oD.od = oD.getDay() + 1; //DD replaced line to fix date bug when current day is 31st
 
-		var todaydate = new Date() //DD added
+		var todaydate = datePicker.iTd //DD added
 		var scanfortoday = (y == todaydate.getFullYear() && m == todaydate.getMonth()) ? todaydate.getDate() : 0; //DD added
 
 		dim[1]=(((oD.getFullYear() % 100 != 0) && (oD.getFullYear() % 4 == 0)) || (oD.getFullYear() % 400 == 0)) ? 29 : 28;
 		
-		var t='<div class="next">►</div><div class="prev">◄</div><table cols="7"><tr>';
-		t+='<td colspan="7">'+mn[m]+' - '+y+'</td></tr><tr>';
+		var t='<table cols="7"><tr>';
+		t+='<td colspan="7"><div class="next">►</div><div class="prev">◄</div>'+mn[m]+' - '+y+'</td></tr><tr>';
 		
 		for(s=0;s<7;s++)
 			t+='<td>'+"ПнВтСрЧтПтСбВс".substr(s*2,2)+'</td>';
@@ -101,10 +110,3 @@ datePicker.end = function()
 		datePicker.curent.remove();
 	}
 	
-document.addEventListener("readystatechange", function(state){
-	if(document.readyState == "complete"){
-		var ds = document.querySelectorAll("input[data-type='date']")
-		for(i = 0; i < ds.length; i++)
-			ds[i].addEventListener("click", function(){ datePicker(this); });
-	}
-});
