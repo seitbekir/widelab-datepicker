@@ -1,49 +1,53 @@
-Array.prototype.last = function(){ return this[this.length - 1]; }
+/*
+ This file is part of widelab-datepicker.
 
-String.prototype.times = function(n){
-	var s = '';
-	for (var i = 0; i < n; i++){ s += this; }
-	return s;
-}
-String.prototype.zp = function(n) { return '0'.times(n - this.length) + this; }
-Number.prototype.zp = function(n) { return this.toString().zp(n); }
-String.prototype.zt = function(n) { return this + '0'.times(n - this.length); } 
-Number.prototype.zt = function(n) { return this.toString().zt(n); }
+    Foobar is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
 
-String.prototype.toInt = function() { return parseInt(this); }
-String.prototype.toFloat = function() { return parseFloat(this); }
-String.prototype.toNumber = function() { return parseFloat(this); }
+    Foobar is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
 
-HTMLElement.prototype.remove = function(){ if(this.parentNode != null) this.parentNode.removeChild(this); else delete(this); }
-HTMLElement.prototype.insertAfter = function(elem){ this.parentNode.insertBefore(elem, this.nextSibling); }
-HTMLElement.prototype.replace = function(elem){ this.parentNode.insertBefore(elem, this.nextSibling); this.remove(); }
-
-var datePicker = function(input)
+    You should have received a copy of the GNU General Public License
+    along with Foobar.  If not, see <http://www.gnu.org/licenses/>.
+ */
+/* DatePicker */
+var datePicker = function(input, onpick, ondis)
 	{
-		if(typeof(datePicker.curent) == "object") datePicker.end();
-		
-		datePicker.input = input;
-		if(/^[0-9]{2}\/[0-9]{2}\/[0-9]{4}$/g.test(input.value))
+		this.input = input;
+		if(/^[0-9]{2}.{1}[0-9]{2}.{1}[0-9]{4}$/g.test(input.value)) // TOTO
 		{
-			datePicker.Td = new Date(input.value.substr(6,4).toInt(), input.value.substr(3,2).toInt() - 1, input.value.substr(0,2).toInt());
-			datePicker.iTd = new Date(input.value.substr(6,4).toInt(), input.value.substr(3,2).toInt() - 1, input.value.substr(0,2).toInt());
+			this.Td = new Date(input.value.substr(6,4).toInt(), input.value.substr(3,2).toInt() - 1, input.value.substr(0,2).toInt());
+			this.iTd = new Date(input.value.substr(6,4).toInt(), input.value.substr(3,2).toInt() - 1, input.value.substr(0,2).toInt());
 		}
 		else 
 		{
-			datePicker.Td = new Date();
-			datePicker.iTd = new Date();
+			this.Td = new Date();
+			this.iTd = new Date();
 		}
-		datePicker.put();
+		
+		this.onpick = onpick;
+		this.ondis = ondis;
+		var th = this;
+		document.addEventListener("outClick", function(e){ if(th.curent){ th.end(); th.ondis(th.input); } })
+		document.addEventListener("datePickerCross", function(e){ if(th.curent){ th.end(); th.ondis(th.input); } })
+		
+		this.input.addEventListener("click", function(){ th.put.call(th); });
+		this.input.addEventListener("click", function(e){ e.stopPropagation(); });
+		this.input.addEventListener("keyup", function(e){ th.changing.call(th) });
 	}
-datePicker.buildCal = function(m, y)
+datePicker.prototype.buildCal = function(m, y)
 	{
 		var mn=['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
 		var dim=[31,0,31,30,31,30,31,31,30,31,30,31];
 
 		var oD = new Date(y, m, 1); //DD replaced line to fix date bug when current day is 31st
-		oD.od = oD.getDay() + 1; //DD replaced line to fix date bug when current day is 31st
+		oD.od = (oD.getDay() + 6) % 7;
 
-		var todaydate = datePicker.iTd //DD added
+		var todaydate = this.iTd //DD added
 		var scanfortoday = (y == todaydate.getFullYear() && m == todaydate.getMonth()) ? todaydate.getDate() : 0; //DD added
 
 		dim[1]=(((oD.getFullYear() % 100 != 0) && (oD.getFullYear() % 4 == 0)) || (oD.getFullYear() % 400 == 0)) ? 29 : 28;
@@ -56,57 +60,104 @@ datePicker.buildCal = function(m, y)
 			
 		t+='</tr><tr>';
 		
-		for(i = 1; i <= 42; i++)
+		for(var i = 0; i < oD.od; i++)
 		{
-			var x = ((i - oD.od >= -1) && (i - oD.od < dim[m] - 1)) ? i - oD.od + 2 : '&nbsp;';
-			var z = "", cl = "";
-			if( x != "&nbsp;") z = " data-make=\""+(new Date(y, m, x)).getTime()+"\"";
+			t += '<td>&nbsp;</td>';
+		}
+		
+		for(var x = 1; x <= dim[m]; x++)
+		{
+			var z = " data-make=\""+(new Date(y, m, x)).getTime()+"\""; var cl = "";
 			if (x == scanfortoday) cl = ' class="today"';
 			t+='<td'+z+''+cl+'>'+x+'</td>';
-			if(((i)%7==0)&&(i<36))
+			if(((x + oD.od)%7==0))
+				t+='</tr><tr>';
+		}
+		for(var x = dim[m]+1; x <= 42 - oD.od; x++)
+		{
+			t+='<td>&nbsp;</td>';
+			if(((x + oD.od)%7==0) && x < 37)
 				t+='</tr><tr>';
 		}
 		
 		t += '</tr></table>';
 		
-		datePicker.curent.innerHTML = t;
-		datePicker.curent.querySelector(".next").addEventListener("click", function(){ datePicker.next(); });
-		datePicker.curent.querySelector(".prev").addEventListener("click", function(){ datePicker.prev(); });
+		return t;
 		
-		var ds = datePicker.curent.querySelectorAll("td[data-make]")
+	}
+datePicker.prototype.changing = function()
+{
+	if(/^[0-9]{2}.{1}[0-9]{2}.{1}[0-9]{4}$/g.test(this.input.value)) // TOTO
+	{
+		this.Td = new Date(this.input.value.substr(6,4).toInt(), this.input.value.substr(3,2).toInt() - 1, this.input.value.substr(0,2).toInt());
+		this.iTd = new Date(this.input.value.substr(6,4).toInt(), this.input.value.substr(3,2).toInt() - 1, this.input.value.substr(0,2).toInt());
+		
+		this.curent.remove();
+		delete(this.curent)
+		this.put();
+	}
+}
+datePicker.prototype.put = function()
+	{
+		if(this.curent) return;
+		document.dispatchEvent(datePickerCross);
+		
+		this.curent = document.createElement("div");
+		this.curent.className = "wide-datepicker";
+		this.input.insertAfter(this.curent);
+		
+		if(typeof(this.onpick) == "function") this.curent.onpick = this.onpick; else this.curent.onpick = function(){ return false; }
+		if(typeof(this.ondis ) == "function") this.curent.ondis  = this.ondis ; else this.curent.ondis  = function(){ return false; }
+		
+		this.curent.innerHTML = this.buildCal(this.Td.getMonth(), this.Td.getFullYear());
+		
+		var th = this;
+		this.curent.querySelector(".next").addEventListener("click", function(){ th.next(); });
+		this.curent.querySelector(".prev").addEventListener("click", function(){ th.prev(); });
+		
+		this.curent.just = true;
+		this.curent.addEventListener("click", function(e){ e.stopPropagation(); });
+		
+		var ds = this.curent.querySelectorAll("td[data-make]")
 		for(i = 0; i < ds.length; i++)
-			ds[i].addEventListener("click", function(){ datePicker.choose(this.getAttribute("data-make")); });
-	}
-datePicker.put = function()
-	{
-		datePicker.curent = document.createElement("div");
-		datePicker.curent.className = "wide-datepicker";
-		datePicker.input.insertAfter(datePicker.curent);
+			ds[i].addEventListener("click", function(){ th.choose(this.getAttribute("data-make")); });
 		
-		datePicker.buildCal(datePicker.Td.getMonth(), datePicker.Td.getFullYear());
+		this.curent.is = true;
 	}
-datePicker.next = function()
+datePicker.prototype.next = function()
 	{
-		datePicker.Td.setMonth(datePicker.Td.getMonth() + 1);
-		datePicker.curent.remove();
+		this.Td.setMonth(this.Td.getMonth() + 1);
+		this.curent.remove();
+		delete(this.curent)
 		
-		datePicker.put();
+		this.put();
 	}
-datePicker.prev = function()
+datePicker.prototype.prev = function()
 	{
-		datePicker.Td.setMonth(datePicker.Td.getMonth() - 1);
-		datePicker.curent.remove();
+		this.Td.setMonth(this.Td.getMonth() - 1);
+		this.curent.remove();
+		delete(this.curent)
 		
-		datePicker.put();
+		this.put();
 	}
-datePicker.choose = function(time)
+datePicker.prototype.choose = function(time)
 	{
 		var time = new Date(time.toInt());
-		datePicker.input.value = time.getDate().zp(2) + "/" + (time.getMonth() + 1).zp(2) + "/" + time.getFullYear();
-		datePicker.end();
+		this.input.value = time.getDate().zp(2) + "/" + (time.getMonth() + 1).zp(2) + "/" + time.getFullYear();
+		this.curent.onpick(time, this.input);
+		
+		this.end();
 	}
-datePicker.end = function()
+datePicker.prototype.end = function()
 	{
-		datePicker.curent.remove();
+		if(!this.curent) return;
+		this.curent.remove();
+		delete(this.curent)
 	}
-	
+var datePickerCross = document.createEvent("Event");
+datePickerCross.initEvent("datePickerCross", true, true)
+
+var outClick = document.createEvent("Event");
+outClick.initEvent("outClick", true, true);
+document.addEventListener("click", function(){ document.dispatchEvent(outClick); });
+/* /DatePicker */

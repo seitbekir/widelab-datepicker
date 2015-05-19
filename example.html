@@ -1,7 +1,23 @@
+<!--
+ This file is part of widelab-datepicker.
+
+    Foobar is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Foobar is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Foobar.  If not, see <http://www.gnu.org/licenses/>.
+-->
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<title>Wide-timepicker</title>
+<title>Wide-datepicker</title>
 <meta charset="utf-8">
 <style>
 * {
@@ -9,7 +25,6 @@
 	padding: 0;
 	outline: none;
 }
-
 label, input[data-type='date'] {
 	display: inline-block;
 	width: 150px;
@@ -55,18 +70,24 @@ input[data-type='date'] + div.wide-datepicker table tr td.today {
 	background: #bfc;
 }
 </style>
+<script src="wide-prototypes.js"></script>
 <script src="wide-datepicker.js"></script>
 <script>
 document.addEventListener("readystatechange", function(state){
 	if(document.readyState == "complete"){
 		var ds = document.querySelectorAll("input[data-type='date']")
 		for(i = 0; i < ds.length; i++)
-			ds[i].addEventListener("click", function(){ datePicker(this); });
+			new datePicker(
+				ds[i],
+				function(time, input){ console.log(time, input) },
+				function(input){ console.log("coosing deny", input) }
+			);
 	}
 });
 </script>
 </head>
 <body>
+	<h1>WideLab DatePicker example</h1>
 	<form name="test" action="" method="post">
 		<label for="test_date_start">From:</label>
 		<input type="text" data-type="date" name="test_date_start" id="test_date_start" placeholder="dd/mm/YYYY">
