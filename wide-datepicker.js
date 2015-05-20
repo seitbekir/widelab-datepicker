@@ -89,8 +89,8 @@ datePicker.prototype.changing = function()
 {
 	if(/^[0-9]{2}.{1}[0-9]{2}.{1}[0-9]{4}$/g.test(this.input.value)) // TOTO
 	{
-		this.Td = new Date(this.input.value.substr(6,4).toInt(), this.input.value.substr(3,2).toInt() - 1, this.input.value.substr(0,2).toInt());
-		this.iTd = new Date(this.input.value.substr(6,4).toInt(), this.input.value.substr(3,2).toInt() - 1, this.input.value.substr(0,2).toInt());
+		this.Td = 	new Date(this.input.value.substr(6,4).toInt(), this.input.value.substr(3,2).toInt() - 1, this.input.value.substr(0,2).toInt());
+		this.iTd = 	new Date(this.input.value.substr(6,4).toInt(), this.input.value.substr(3,2).toInt() - 1, this.input.value.substr(0,2).toInt());
 		
 		this.curent.remove();
 		delete(this.curent)
@@ -142,7 +142,10 @@ datePicker.prototype.prev = function()
 	}
 datePicker.prototype.choose = function(time)
 	{
-		var time = new Date(time.toInt());
+		var time = 	new Date(time.toInt());
+		this.Td = 	new Date(time);
+		this.iTd = 	new Date(time);
+		
 		this.input.value = time.getDate().zp(2) + "/" + (time.getMonth() + 1).zp(2) + "/" + time.getFullYear();
 		this.curent.onpick(time, this.input);
 		
